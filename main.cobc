@@ -1,0 +1,58 @@
+IDENTIFICATION DIVISION.
+PROGRAM-ID. VM.
+
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+  *> Memory: Each instruction stored separately
+  01 MEMORY.
+     05 MEM-ADDR OCCURS 10 TIMES PIC 99.
+
+  *> Registers
+  01 REGISTERS.
+     05 R1 PIC 9(4) VALUE 0.
+
+  *> Temporary variable for printing (no leading zeros)
+  01 TEMP-VAR PIC Z(4).
+
+  *> Instruction Pointer
+  01 IP PIC 99 VALUE 1.
+  *> Current opcode
+  01 OPCODE PIC 99.
+
+PROCEDURE DIVISION.
+INITIALIZE-MEMORY.
+    MOVE 01 TO MEM-ADDR(1). *> LOAD R1, 5
+    MOVE 05 TO MEM-ADDR(2).
+    MOVE 02 TO MEM-ADDR(3). *> ADD R1, 3
+    MOVE 03 TO MEM-ADDR(4).
+    MOVE 03 TO MEM-ADDR(5). *> PRINT R1
+    MOVE 00 TO MEM-ADDR(6). *> HALT
+
+MAIN-LOOP.
+    PERFORM FETCH-INSTRUCTION.
+    PERFORM EXECUTE-INSTRUCTION.
+    IF OPCODE NOT EQUAL TO 00 GO TO MAIN-LOOP.
+    STOP RUN.
+
+FETCH-INSTRUCTION.
+    MOVE MEM-ADDR(IP) TO OPCODE.
+
+EXECUTE-INSTRUCTION.
+    EVALUATE OPCODE
+       WHEN 01
+          *> LOAD R1, VALUE (next memory slot)
+          ADD 1 TO IP
+          MOVE MEM-ADDR(IP) TO R1
+       WHEN 02
+          *> ADD R1, VALUE (next memory slot)
+          ADD 1 TO IP
+          ADD MEM-ADDR(IP) TO R1
+       WHEN 03
+          *> PRINT R1 (with proper formatting)
+          MOVE R1 TO TEMP-VAR
+          DISPLAY "R1: " TEMP-VAR
+       WHEN 00
+          *> HALT
+          STOP RUN
+    END-EVALUATE.
+    ADD 1 TO IP.
